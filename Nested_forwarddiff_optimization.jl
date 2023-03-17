@@ -35,12 +35,15 @@ end
 
 function loss_outer(probODE,prob_set_kf,probss,u03,Tmeas,Ymeas)
     function loss_inner(p_guess,(u0,p_fix,kf_guess,plateau,kd,start_time,end_time))
-        
+        # Optimize kf based on knowing u0[3] at steady state using current value of p_guess
         sol_kf = solve(remake(prob_set_kf,u0=eltype(p_guess).(kf_guess),p=(u0,p_guess,p_fix,plateau,kd,start_time,end_time)),BFGS())
-       
+        # Use optimized value of kf and current p_guess to calculate u0 at steady state (and also time=0)
+        # Because system was assumed at steady state at time = 0
         sol_ss = solve(remake(probss,p=(p_guess,p_fix,sol_kf.u,0.0,kd,start_time,end_time)))
-       
+        # Solve ODE with current p_guess, u0 and optimized kf over timespan
         sol = solve(remake(probODE,u0=eltype(p_guess).(sol_ss.u),p=(p_guess,p_fix,sol_kf.u,plateau,kd,start_time,end_time)),Rosenbrock23(autodiff=false),dtmax=0.1)
+        
+        # Match ODE solution to 'measured' labeling
         Xpred = sol(Tmeas)
         Ypred = (u03.-Xpred[3,:])./u03
         return sum((Ypred.-Ymeas).^2)
@@ -50,9 +53,9 @@ end
 
 function set_kf_outer(probss,u03)
     function set_kf_inner(kf_guess,(u0,p_guess,p_fix,plateau,kd,start_time,end_time))
-       
+        # Solve for steady state with current p_guess and an initial guess of kf and u0
         sol = solve(remake(probss,u0=eltype(kf_guess).(u0),p=(p_guess,p_fix,kf_guess,plateau,kd,start_time,end_time)))
-        
+        # Compare kf at steady state to measured u0[3]
         return (sol[3].-u03).^2
     end
 end
