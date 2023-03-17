@@ -88,7 +88,7 @@ function main()
     plateau = 0.5
     
     sol_true = solve(remake(probODE,u0=u0_ss,p=(p_var,p_fix,kf0,plateau,kd,start_time,end_time)),dtmax=0.1)
-    display(plot(sol_true[3,:]))
+    #display(plot(sol_true[3,:]))
     
     #### Hourly solution to simulate measurements
     Tmeas = collect(0:t_end) # Timepoints
@@ -98,9 +98,9 @@ function main()
     #@show Ymeas
 
     # Plot true solution with simulated measurements
-    p1 = plot(sol_true.t,(u03.-sol_true[3,:])./u03,label="solution with true values")
-    scatter!(p1,Tmeas,Ymeas,label="measured quantity")
-    display(plot(p1))
+    # p1 = plot(sol_true.t,(u03.-sol_true[3,:])./u03,label="solution with true values",title="True solution")
+    # scatter!(p1,Tmeas,Ymeas,label="'measured' quantity")
+    # display(plot(p1))
     
     #### Reset plateau to zero to solve for steady state with p_guess and kf_guess (initial values)
     p_guess = [10.0,3.0] #inital guess at values in p_val
@@ -116,57 +116,59 @@ function main()
     #### Set up optimization problem for p_guess
     loss = loss_outer(probODE,prob_set_kf,probss,u03,Tmeas,Ymeas)
     
-    #### Optimization problem with derivative
-    optp = OptimizationFunction(loss,Optimization.AutoForwardDiff())
-    prob_find_p = OptimizationProblem(optp,p_guess,(u0_guess,p_fix,kf_guess,plateau,kd,start_time,end_time))
+    # Compare gradients by finite diff and forward diff
     @show FiniteDiff.finite_difference_gradient(x -> loss(x,(u0_guess,p_fix,kf_guess,plateau,kd,start_time,end_time)), p_guess)
     @show ForwardDiff.gradient(x -> loss(x,(u0_guess,p_fix,kf_guess,plateau,kd,start_time,end_time)), p_guess)
     @show "Finite diff gradient is similar to but not equal to Forward diff gradient"
-    
+
+    #### Optimization problem with derivative
+    optp = OptimizationFunction(loss,Optimization.AutoForwardDiff())
+    prob_find_p = OptimizationProblem(optp,p_guess,(u0_guess,p_fix,kf_guess,plateau,kd,start_time,end_time))
     sol_p = solve(prob_find_p,Optim.NewtonTrustRegion())
-    # for i in 1:1
+    # Optional additional optimizations
+    # for i in 1:2
     #     sol_p = solve(remake(prob_find_p,u0=sol_p.u),Optim.BFGS())
     # end
     # sol_p = solve(remake(prob_find_p,u0=sol_p.u),Optim.NewtonTrustRegion())
-    # #### Optimization problem without derivative
+
+    #### Optimization problem without derivative
     # prob_find_p = OptimizationProblem(loss,p_guess,(u0_guess,p_fix,kf_guess,plateau,kd,start_time,end_time))  
     # sol_p = solve(prob_find_p,NelderMead(),allow_f_increases=true)
     
-    @show sol_p.u
+    @show "Optimized p",sol_p.u
     @show sol_p.original
 
 
     #### Analyze results with optimized p_guess
     sol_kf = solve(remake(prob_set_kf,u0=kf_guess,p=(u0_guess,sol_p.u,p_fix,plateau,kd,start_time,end_time)),BFGS())
     @show "Final answer for kf:",sol_kf.u,kf0
-    
     sol_ss = solve(remake(probss,p=(sol_p.u,p_fix,sol_kf.u,plateau,kd,start_time,end_time)))
     @show "Final answer for u_ss:",sol_ss.u,u0_ss
-
     # Solve ODE over time with final value for u0, kf and p 
     sol = solve(remake(probODE,u0=sol_ss.u,p=(sol_p.u,p_fix,sol_kf.u,plateau,kd,start_time,end_time)),dtmax=0.1)
-    p1 = plot(sol.t,(u03.-sol[3,:])./u03,label="p_guess")
+    p1 = plot(sol.t,(u03.-sol[3,:])./u03,label="p_guess",title="Optimized solution")
     scatter!(p1,Tmeas,Ymeas,label="measured labeling")
     xlabel!(p1,"time (h)")
     ylabel!(p1,"fraction labeled")
     display(p1)
 
 
-    #### Compare results above to correct solution
+    #### Compare results above to solution with true p
     sol_kf = solve(remake(prob_set_kf,u0=kf_guess,p=(u0_guess,p_var,p_fix,plateau,kd,start_time,end_time)),BFGS())
      @show "Solve for kf when p_var is correct",sol_kf.u,kf0
     sol_ss = solve(remake(probss,p=(p_var,p_fix,sol_kf.u,plateau,kd,start_time,end_time)))
     @show "Solve for u_ss when p_var is correct",sol_ss.u,u0_ss
     # Solve ODE over time with correct values for u0, kf and p
     sol = solve(remake(probODE,u0=sol_ss.u,p=(p_var,p_fix,sol_kf.u,plateau,kd,start_time,end_time)),dtmax=0.1)
-    p1 = plot(sol.t,(u03.-sol[3,:])./u03,label="p_guess")
+    p1 = plot(sol.t,(u03.-sol[3,:])./u03,label="p_guess",title="True solution")
     scatter!(p1,Tmeas,Ymeas,label="measured labeling")
     xlabel!(p1,"time (h)")
     ylabel!(p1,"fraction labeled")
     display(p1)
     Xpred = sol(Tmeas)
     Ypred = (u03.-Xpred[3,:])./u03
-    @show sum((Ypred.-Ymeas).^2)
+    @show "Error in ODE solution with true values",sum((Ypred.-Ymeas).^2)
+
     return nothing
 end
 
