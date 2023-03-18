@@ -151,7 +151,9 @@ function main()
     xlabel!(p1,"time (h)")
     ylabel!(p1,"fraction labeled")
     display(p1)
-
+    Xpred = sol(Tmeas)
+    Ypred = (u03.-Xpred[3,:])./u03
+    @show "Error in ODE solution with optimized values",sum((Ypred.-Ymeas).^2)
 
     #### Compare results above to solution with true p
     sol_kf = solve(remake(prob_set_kf,u0=kf_guess,p=(u0_guess,p_var,p_fix,plateau,kd,start_time,end_time)),BFGS())
