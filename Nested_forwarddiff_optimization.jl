@@ -41,7 +41,7 @@ function loss_outer(probODE,prob_set_kf,probss,u03,Tmeas,Ymeas)
         # Because system was assumed at steady state at time = 0
         sol_ss = solve(remake(probss,p=(p_guess,p_fix,sol_kf.u,0.0,kd,start_time,end_time)))
         # Solve ODE with current p_guess, u0 and optimized kf over timespan
-        sol = solve(remake(probODE,u0=eltype(p_guess).(sol_ss.u),p=(p_guess,p_fix,sol_kf.u,plateau,kd,start_time,end_time)),Rosenbrock23(autodiff=false),dtmax=0.1)
+        sol = solve(remake(probODE,u0=eltype(p_guess).(sol_ss.u),p=(p_guess,p_fix,sol_kf.u,plateau,kd,start_time,end_time)),dtmax=0.1)
         
         # Match ODE solution to 'measured' labeling
         Xpred = sol(Tmeas)
