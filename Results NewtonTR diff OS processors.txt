@@ -1,3 +1,20 @@
+Line 124
+    #### Optimization problem with derivative
+    optp = OptimizationFunction(loss,Optimization.AutoForwardDiff())
+    prob_find_p = OptimizationProblem(optp,p_guess,(u0_guess,p_fix,kf_guess,plateau,kd,start_time,end_time))
+    sol_p = solve(prob_find_p,Optim.NewtonTrustRegion())
+    # Optional additional optimizations
+    # for i in 1:2
+    #     sol_p = solve(remake(prob_find_p,u0=sol_p.u),Optim.BFGS())
+    # end
+    # sol_p = solve(remake(prob_find_p,u0=sol_p.u),Optim.NewtonTrustRegion())
+
+    #### Optimization problem without derivative
+    # prob_find_p = OptimizationProblem(loss,p_guess,(u0_guess,p_fix,kf_guess,plateau,kd,start_time,end_time))  
+    # sol_p = solve(prob_find_p,NelderMead(),allow_f_increases=true)
+
+
+
 Results 1:
 11th Gen Intel® Core™ i7-1165G7 @ 2.80GHz × 8
 Ubuntu 22.04.2 LTS
@@ -111,3 +128,61 @@ sol_p.original =  * Status: failure
 ("Solve for kf when p_var is correct", sol_kf.u, kf0) = ("Solve for kf when p_var is correct", [10.0], [10.0])
 ("Solve for u_ss when p_var is correct", sol_ss.u, u0_ss) = ("Solve for u_ss when p_var is correct", [10.0, 40.0, 20.0], [10.0, 40.0, 20.0])
 ("Error in ODE solution with true values", sum((Ypred .- Ymeas) .^ 2)) = ("Error in ODE solution with true values", 0.0) 
+
+Results 3:
+AMD® Ryzen 9 5900 12-core processor × 24
+Ubuntu 22.04.2 LTS
+NVIDIA Corporation GA102 [GeForce RTX 3080]
+Julia Version 1.9.0-rc1
+Commit 3b2e0d8fbc (2023-03-07 07:51 UTC)
+Platform Info:
+  OS: Linux (x86_64-linux-gnu)
+  CPU: 24 × AMD Ryzen 9 5900 12-Core Processor
+  WORD_SIZE: 64
+  LIBM: libopenlibm
+  LLVM: libLLVM-14.0.6 (ORCJIT, znver3)
+  Threads: 1 on 24 virtual cores
+Environment:
+  LD_LIBRARY_PATH = /usr/local/cuda-11.8/lib64:
+  JULIA_EDITOR = code
+  JULIA_NUM_THREADS = 
+
+("u0_ss true", sol_ss.u) = ("u0_ss true", [10.0, 40.0, 20.0])
+FiniteDiff.finite_difference_gradient((x->begin
+            #= /home/elbert5770/Documents/git/Nested-forward-diff-opt/Nested_forwarddiff_optimization.jl:120 =#
+            loss(x, (u0_guess, p_fix, kf_guess, plateau, kd, start_time, end_time))
+        end), p_guess) = [0.0016859401042578644, 0.019264020103602106]
+ForwardDiff.gradient((x->begin
+            #= /home/elbert5770/Documents/git/Nested-forward-diff-opt/Nested_forwarddiff_optimization.jl:121 =#
+            loss(x, (u0_guess, p_fix, kf_guess, plateau, kd, start_time, end_time))
+        end), p_guess) = [0.0016675744706484707, 0.019263735797034807]
+"Finite diff gradient is similar to but not equal to Forward diff gradient" = "Finite diff gradient is similar to but not equal to Forward diff gradient"
+("Optimized p", sol_p.u) = ("Optimized p", [1.0003085716501734, 0.49996324230817407])
+sol_p.original =  * Status: failure
+
+ * Candidate solution
+    Final objective value:     9.254577e-10
+
+ * Found with
+    Algorithm:     Newton's Method (Trust Region)
+
+ * Convergence measures
+    |x - x'|               = 0.00e+00 ≤ 0.0e+00
+    |x - x'|/|x'|          = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x')|         = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x')|/|f(x')| = 0.00e+00 ≤ 0.0e+00
+    |g(x)|                 = 4.20e-06 ≰ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    28
+    f(x) calls:    29
+    ∇f(x) calls:   29
+    ∇²f(x) calls:  18
+
+("Final answer for kf:", sol_kf.u, kf0) = ("Final answer for kf:", [9.999264846163442], [10.0])
+("Final answer for u_ss:", sol_ss.u, u0_ss) = ("Final answer for u_ss:", [9.996180308310272, 39.99705938465377, 19.999999999999943], [10.0, 40.0, 20.0])
+("Error in ODE solution with optimized values", sum((Ypred .- Ymeas) .^ 2)) = ("Error in ODE solution with optimized values", 9.254577306742998e-10)
+("Solve for kf when p_var is correct", sol_kf.u, kf0) = ("Solve for kf when p_var is correct", [10.0], [10.0])
+("Solve for u_ss when p_var is correct", sol_ss.u, u0_ss) = ("Solve for u_ss when p_var is correct", [10.0, 40.0, 20.0], [10.0, 40.0, 20.0])
+("Error in ODE solution with true values", sum((Ypred .- Ymeas) .^ 2)) = ("Error in ODE solution with true values", 0.0)
