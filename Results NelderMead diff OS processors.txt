@@ -1,3 +1,4 @@
+In the file Nested_forwarddiff_optimization.jl, the solver is setup starting at line 124 in this alternative configuation
 Line 124
     #### Optimization problem with derivative
     # optp = OptimizationFunction(loss,Optimization.AutoForwardDiff())
@@ -140,6 +141,56 @@ FiniteDiff.finite_difference_gradient((x->begin
         end), p_guess) = [0.0016859401042578644, 0.019264020103602106]
 ForwardDiff.gradient((x->begin
             #= /home/elbert5770/Documents/git/Nested-forward-diff-opt/Nested_forwarddiff_optimization.jl:121 =#
+            loss(x, (u0_guess, p_fix, kf_guess, plateau, kd, start_time, end_time))
+        end), p_guess) = [0.0016675744706484707, 0.019263735797034807]
+"Finite diff gradient is similar to but not equal to Forward diff gradient" = "Finite diff gradient is similar to but not equal to Forward diff gradient"
+("Optimized p", sol_p.u) = ("Optimized p", [1.000431738463259, 0.49994759491773444])
+sol_p.original =  * Status: success
+
+ * Candidate solution
+    Final objective value:     1.762296e-09
+
+ * Found with
+    Algorithm:     Nelder-Mead
+
+ * Convergence measures
+    √(Σ(yᵢ-ȳ)²)/n ≤ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    61
+    f(x) calls:    118
+
+("Final answer for kf:", sol_kf.u, kf0) = ("Final answer for kf:", [9.998951898354662], [10.0])
+("Final answer for u_ss:", sol_ss.u, u0_ss) = ("Final answer for u_ss:", [9.994636829209185, 39.995807593418704, 20.0], [10.0, 40.0, 20.0])
+("Error in ODE solution with optimized values", sum((Ypred .- Ymeas) .^ 2)) = ("Error in ODE solution with optimized values", 1.7622955520204484e-9)
+("Solve for kf when p_var is correct", sol_kf.u, kf0) = ("Solve for kf when p_var is correct", [10.0], [10.0])
+("Solve for u_ss when p_var is correct", sol_ss.u, u0_ss) = ("Solve for u_ss when p_var is correct", [10.0, 40.0, 20.0], [10.0, 40.0, 20.0])
+("Error in ODE solution with true values", sum((Ypred .- Ymeas) .^ 2)) = ("Error in ODE solution with true values", 0.0)
+
+Results 4:
+AMD® Ryzen 9 5900 12-core processor × 24
+Windows 11 Home 22H2
+NVIDIA Corporation GA102 [GeForce RTX 3080]
+Platform Info:
+  OS: Windows (x86_64-w64-mingw32)
+  CPU: 24 × AMD Ryzen 9 5900 12-Core Processor
+  WORD_SIZE: 64
+  LIBM: libopenlibm
+  LLVM: libLLVM-14.0.6 (ORCJIT, znver3)
+  Threads: 1 on 24 virtual cores
+Environment:
+  JULIA_IMAGE_THREADS = 1
+  JULIA_EDITOR = code
+  JULIA_NUM_THREADS =
+
+  ("u0_ss true", sol_ss.u) = ("u0_ss true", [10.0, 40.0, 20.0])
+FiniteDiff.finite_difference_gradient((x->begin
+            #= c:\Users\elber\Documents\git\Nested-forward-diff-opt\Nested_forwarddiff_optimization.jl:120 =#
+            loss(x, (u0_guess, p_fix, kf_guess, plateau, kd, start_time, end_time))
+        end), p_guess) = [0.0016859401042578644, 0.019264020103602106]
+ForwardDiff.gradient((x->begin
+            #= c:\Users\elber\Documents\git\Nested-forward-diff-opt\Nested_forwarddiff_optimization.jl:121 =#
             loss(x, (u0_guess, p_fix, kf_guess, plateau, kd, start_time, end_time))
         end), p_guess) = [0.0016675744706484707, 0.019263735797034807]
 "Finite diff gradient is similar to but not equal to Forward diff gradient" = "Finite diff gradient is similar to but not equal to Forward diff gradient"
